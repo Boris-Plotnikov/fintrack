@@ -21,6 +21,6 @@ An operation is never updated or deleted. A correction is a new row with `kind =
 
 ## Consequences
 
-- `SUM(amount)` per account is always the correct balance — no special cases.
+- `SUM(amount)` per account is always the correct balance - no special cases.
 - A correction counts in the month it is made, so closed months never change.
 - The UI groups corrections under their original.

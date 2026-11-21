@@ -76,7 +76,7 @@ public class PhraseParser {
         } else if (EXPENSE_WORDS.stream().anyMatch(lower::contains)) {
             kind = OperationKind.EXPENSE;
         } else {
-            warnings.add("Could not tell income from expense — expense assumed");
+            warnings.add("Could not tell income from expense - expense assumed");
             kind = OperationKind.EXPENSE;
         }
 
@@ -91,7 +91,7 @@ public class PhraseParser {
             account = guessAccountByWords(lower, accounts);
         }
         if (account == null) {
-            warnings.add("No account found in the text — choose one");
+            warnings.add("No account found in the text - choose one");
         }
 
         String forAmount = account == null ? text : text.replaceAll("(?i)" + Pattern.quote(account.getName()), " ");
@@ -112,7 +112,7 @@ public class PhraseParser {
         if (account != null) {
             if (currency != null && !currency.equals(account.getCurrency())) {
                 warnings.add("Text says " + currency + " but " + account.getName() + " is in " + account.getCurrency()
-                        + " — the amount is booked in " + account.getCurrency());
+                        + " - the amount is booked in " + account.getCurrency());
             }
             currency = account.getCurrency();
         }
@@ -133,7 +133,7 @@ public class PhraseParser {
             category = categories.stream()
                     .filter(c -> c.getKind() == wanted && c.getName().startsWith("Other"))
                     .findFirst().orElse(null);
-            warnings.add("Category not recognised — 'Other' suggested");
+            warnings.add("Category not recognised - 'Other' suggested");
         }
 
         String counterparty = null;

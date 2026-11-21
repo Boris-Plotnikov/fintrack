@@ -30,7 +30,7 @@ export default function TransfersPage() {
       await api("/api/transfers", { method: "POST", body: { fromAccountId: Number(from), toAccountId: Number(to), amount: Number(amount.replace(",", ".")), comment } });
       setAmount("");
       setComment("");
-      showToast("Transfer sent — waiting for confirmation");
+      showToast("Transfer sent - waiting for confirmation");
       load();
     } catch (err) {
       setError((err as Error).message);

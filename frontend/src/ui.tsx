@@ -111,7 +111,7 @@ export function useToast(): [ReactNode, (text: string) => void] {
 }
 
 export function money(value: number | string | undefined | null, currency = "EUR"): string {
-  if (value === undefined || value === null) return "–";
+  if (value === undefined || value === null) return "-";
   const n = typeof value === "string" ? Number(value) : value;
   return `${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 }

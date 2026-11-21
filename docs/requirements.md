@@ -2,7 +2,7 @@
 
 ## Business goal
 
-The owner of a small multi-office service company wants to know at any moment: profit, turnover, how much money is where — and be told only about exceptions.
+The owner of a small multi-office service company wants to know at any moment: profit, turnover, how much money is where - and be told only about exceptions.
 
 ## Users and roles
 

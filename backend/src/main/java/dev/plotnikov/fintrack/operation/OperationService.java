@@ -126,7 +126,7 @@ public class OperationService {
                     + op.getDescription(), op.getId(), op.getShiftId(), account.getId());
         }
         audit.log(user, "OPERATION_CREATED", "operation", op.getId(),
-                op.getKind() + " " + op.getAmount() + " " + op.getCurrency() + " on " + account.getName() + " — " + op.getDescription());
+                op.getKind() + " " + op.getAmount() + " " + op.getCurrency() + " on " + account.getName() + " - " + op.getDescription());
         return toDto(op, List.of());
     }
 

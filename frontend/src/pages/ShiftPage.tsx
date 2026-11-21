@@ -52,7 +52,7 @@ export default function ShiftPage() {
     try {
       await api("/api/shifts/open", { method: "POST" });
       setResult(null);
-      showToast("Shift opened — operations are now linked to it");
+      showToast("Shift opened - operations are now linked to it");
       load();
     } catch (e) {
       showToast((e as Error).message);
@@ -112,7 +112,7 @@ export default function ShiftPage() {
         )}
         {result && (
           <div className={`mt-6 rounded-lg p-4 ${result.hasDiscrepancy ? "bg-red-50" : "bg-emerald-50"}`}>
-            <div className="font-semibold">{result.hasDiscrepancy ? "Closed with a difference — the management is informed" : "Closed. Everything matches 👍"}</div>
+            <div className="font-semibold">{result.hasDiscrepancy ? "Closed with a difference - the management is informed" : "Closed. Everything matches 👍"}</div>
             {result.counts.map((c) => (
               <div key={c.account} className="mt-2 text-sm">
                 {c.account}: expected {money(c.expected, c.currency)}, counted {money(c.counted, c.currency)}, difference <b>{money(c.difference, c.currency)}</b>

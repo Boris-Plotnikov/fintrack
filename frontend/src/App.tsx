@@ -17,12 +17,12 @@ import ReportsPage from "./pages/ReportsPage";
 import AuditPage from "./pages/AuditPage";
 
 const TOUR: TourStep[] = [
-  { route: "/dashboard", target: "kpis", title: "The three numbers first", text: "Profit this month, turnover and the total balance of all accounts in EUR — what an owner looks at every morning.", flow: "dashboard" },
+  { route: "/dashboard", target: "kpis", title: "The three numbers first", text: "Profit this month, turnover and the total balance of all accounts in EUR - what an owner looks at every morning.", flow: "dashboard" },
   { route: "/operations", target: "phrase", title: "Write it like a chat message", text: "Type “Paid 35 EUR for taxi from Cash Vienna” and press Enter. The system proposes a card; nothing is saved before you confirm.", flow: "phrase" },
   { route: "/operations", target: "op-list", title: "Nothing is ever deleted", text: "A mistake is fixed with a correction linked to the original. Late or large corrections go to the management as anomalies.", flow: "correction" },
   { route: "/transfers", target: "transfers", title: "Money in transit", text: "A transfer between own accounts leaves the sender at once and arrives only when the receiver confirms it. No double counting.", flow: "transfers" },
   { route: "/shift", target: "shift", title: "Blind cash count", text: "At the end of a shift the employee types the counted cash without seeing the expected amount. Differences above the tolerance need a comment.", flow: "shift" },
-  { route: "/anomalies", target: "anomalies", title: "What needs attention", text: "Large amounts, late corrections, cash differences, overdrafts — collected automatically for the owner.", flow: "anomalies" },
+  { route: "/anomalies", target: "anomalies", title: "What needs attention", text: "Large amounts, late corrections, cash differences, overdrafts - collected automatically for the owner.", flow: "anomalies" },
   { route: "/reports", target: "report", title: "Month report and CSV", text: "Income and expenses by category and office, export to CSV, import of a bank statement with duplicate check.", flow: "reports" },
 ];
 

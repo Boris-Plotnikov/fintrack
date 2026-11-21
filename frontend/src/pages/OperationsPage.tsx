@@ -52,7 +52,7 @@ export default function OperationsPage() {
         actions={<Button onClick={() => setFormOpen(true)}>+ New operation</Button>} />
 
       <form onSubmit={parse} data-tour="phrase" className="card mb-6 p-4">
-        <label className="label">Quick entry — write it like a message</label>
+        <label className="label">Quick entry - write it like a message</label>
         <div className="flex gap-2">
           <input className="input" value={phrase} onChange={(e) => setPhrase(e.target.value)}
             placeholder={me.role === "EMPLOYEE" ? `Paid 35 EUR for taxi from Cash ${me.office}` : "Received 2500 EUR from Isar Medical AG for consulting to Bank Vienna"} />
@@ -93,7 +93,7 @@ export default function OperationsPage() {
                   {o.corrections.length > 0 && (
                     <ul className="mt-2 space-y-1 border-l-2 border-amber-300 pl-3 text-xs">
                       {o.corrections.map((c) => (
-                        <li key={c.id}>✏️ <Amount value={c.delta} currency={o.currency} /> — {c.reason} <span className="text-muted">({c.by}, {dateTime(c.at)})</span></li>
+                        <li key={c.id}>✏️ <Amount value={c.delta} currency={o.currency} /> - {c.reason} <span className="text-muted">({c.by}, {dateTime(c.at)})</span></li>
                       ))}
                     </ul>
                   )}

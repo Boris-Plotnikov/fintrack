@@ -24,6 +24,6 @@ Written by Boris Plotnikov as the task for the external frontend developer. API:
 | Reports | Month select, KPIs, expenses pie, profit by office, CSV export, statement import with check step | `/api/reports/*`, `POST /api/import` |
 | Audit log | Paged table | `GET /api/audit` |
 | Activity panel | Latest audit entries every 5 s | `GET /api/dashboard` |
-| Tour | 7 steps, skips screens the role cannot see | — |
+| Tour | 7 steps, skips screens the role cannot see | - |
 
 Menu items depend on the role (Shift not for the owner; Anomalies, Reports, Audit only for management), but the API checks permissions anyway.

@@ -52,7 +52,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
           <img src="./favicon.svg" alt="" className="h-10 w-10" />
           <div className="text-2xl font-bold">FinTrack</div>
         </div>
-        <h1 className="mt-6 text-3xl font-bold leading-tight">Every euro of a three-office company, in one place.</h1>
+        <h1 className="mt-6 text-3xl font-bold leading-tight">Accounting for a company with three offices and four currencies</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Demonstration project for the fictional “Alpine Services GmbH” (Vienna, Munich, Prague). Based on a real accounting system built for a client; all data here is invented.
         </p>
