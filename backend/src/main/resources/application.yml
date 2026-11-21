@@ -1,0 +1,60 @@
+server:
+  port: ${PORT:8102}
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 30d
+      cookie:
+        name: FINTRACK_SESSION
+        http-only: true
+        same-site: lax
+
+spring:
+  application:
+    name: fintrack
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fintrack}
+    username: ${DB_USER:fintrack}
+    password: ${DB_PASSWORD:fintrack}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        order_by.default_null_ordering: last
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+fintrack:
+  timezone: Europe/Vienna
+  large-amount-eur: ${LARGE_AMOUNT_EUR:5000}
+  late-correction-hours: 24
+  large-correction-eur: 500
+  demo-mode: ${DEMO_MODE:true}
+  demo-password: ${DEMO_PASSWORD:demo}
+  reset-cron: ${RESET_CRON:0 0 3 * * *}
+
+logging:
+  level:
+    dev.plotnikov.fintrack: INFO
+  file:
+    name: ${LOG_FILE:logs/fintrack.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 5MB
+      max-history: 5

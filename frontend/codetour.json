@@ -1,0 +1,176 @@
+{
+  "root": "../backend/src",
+  "flows": [
+    {
+      "id": "phrase",
+      "title": "Phrase to operation",
+      "summary": "“Paid 35 EUR for taxi from Cash Vienna” becomes a draft card: kind, account, amount, currency and category are recognized by rules, not by AI. Nothing is saved until the user confirms.",
+      "routes": ["/operations"],
+      "endpoints": ["POST /api/operations/parse"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/operation/OperationController.java", "symbol": "method:parse", "note": "Returns a draft only; the form is filled from it." },
+        { "layer": "Domain", "file": "main/java/dev/plotnikov/fintrack/operation/PhraseParser.java", "symbol": "method:parse", "note": "Keyword lists, the longest matching account name, a regex for the amount. Every guess that failed becomes a warning." },
+        { "layer": "Domain", "file": "main/java/dev/plotnikov/fintrack/operation/PhraseParser.java", "symbol": "method:parseNumber", "note": "Both 1,234.50 and 1.234,50 are understood." },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/PhraseParserTest.java", "symbol": "method:incomeWithCounterpartyAndEuropeanNumber", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/PhraseParserTest.java", "symbol": "method:warnsAboutWhatIsMissing", "note": "" }
+      ]
+    },
+    {
+      "id": "operation",
+      "title": "Recording an operation",
+      "summary": "One transaction checks the kind, the access to the account, the category, the date and the cash balance; fixes the exchange rate of the day; and writes the audit log.",
+      "routes": ["/operations", "/dashboard"],
+      "endpoints": ["POST /api/operations"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/operation/OperationController.java", "symbol": "method:create", "note": "Bean Validation on the request, the user comes from the session." },
+        { "layer": "DTO", "file": "main/java/dev/plotnikov/fintrack/operation/OperationRequests.java", "symbol": "file", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:create", "note": "All business rules of an operation in one place." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:checkCashNotNegative", "note": "A cash box cannot go below zero; a bank account can, and that raises an anomaly." },
+        { "layer": "Domain", "file": "main/java/dev/plotnikov/fintrack/common/Money.java", "symbol": "file", "note": "BigDecimal everywhere, two decimals, one rounding rule." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/account/RateService.java", "symbol": "method:rateToEur", "note": "The rate of the operation day is stored with the operation and never recalculated." },
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:operations", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:cashCannotGoNegative", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:categoryMustMatchKind", "note": "" }
+      ]
+    },
+    {
+      "id": "correction",
+      "title": "Corrections instead of deletes",
+      "summary": "Operations are never edited or deleted. A correction is a new row with the difference, linked to the original; the effective amount is the sum. Late or large corrections are reported to the management.",
+      "routes": ["/operations"],
+      "endpoints": ["POST /api/operations/{id}/correct", "GET /api/operations/{id}"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/operation/OperationController.java", "symbol": "method:correct", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:correct", "note": "Only the author or a manager; the delta is booked, not the new amount." },
+        { "layer": "Domain", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:effectiveAmount", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:correctionKeepsOriginalAndCanCancel", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:onlyAuthorOrManagerCanCorrect", "note": "" }
+      ]
+    },
+    {
+      "id": "search",
+      "title": "Filters and paging",
+      "summary": "The operations list is filtered in the database with JPA Specifications; corrections of a whole page are loaded with one query instead of one per row.",
+      "routes": ["/operations"],
+      "endpoints": ["GET /api/operations"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/operation/OperationController.java", "symbol": "method:list", "note": "" },
+        { "layer": "DTO", "file": "main/java/dev/plotnikov/fintrack/operation/OperationFilter.java", "symbol": "type:OperationFilter", "note": "" },
+        { "layer": "Repository", "file": "main/java/dev/plotnikov/fintrack/operation/OperationSpecifications.java", "symbol": "method:fromFilter", "note": "Each filter adds a predicate only when it is set." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:list", "note": "Page size is capped at 200; no N+1 for corrections." }
+      ]
+    },
+    {
+      "id": "transfers",
+      "title": "Transfers with money in transit",
+      "summary": "A transfer leaves the sender at once and reaches the receiver only after confirmation. Between the two steps the money is “in transit” and counted once. Different currencies are converted at the rate of the day.",
+      "routes": ["/transfers", "/dashboard"],
+      "endpoints": ["GET /api/transfers", "POST /api/transfers", "POST /api/transfers/{id}/confirm", "POST /api/transfers/{id}/reject"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/transfer/TransferController.java", "symbol": "method:confirm", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/transfer/TransferService.java", "symbol": "method:create", "note": "Writes a TRANSFER_OUT operation and a pending transfer." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/transfer/TransferService.java", "symbol": "method:confirm", "note": "The receiver books TRANSFER_IN." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/transfer/TransferService.java", "symbol": "method:reject", "note": "A rejection returns the money to the sender, with a reason." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/transfer/TransferService.java", "symbol": "method:inTransitEur", "note": "" },
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:transfers", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:transferIsInTransitUntilConfirmed", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:currencyTransferIsConverted", "note": "" }
+      ]
+    },
+    {
+      "id": "shift",
+      "title": "Shift close with a blind count",
+      "summary": "The employee enters the counted cash without seeing the expected amount. The server compares it with the records; a difference above the tolerance of the cash box needs a comment and raises an anomaly.",
+      "routes": ["/shift"],
+      "endpoints": ["GET /api/shifts/current", "POST /api/shifts/open", "POST /api/shifts/{id}/close", "GET /api/shifts"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/shift/ShiftController.java", "symbol": "method:close", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/shift/ShiftService.java", "symbol": "method:open", "note": "The response lists the cash boxes to count, without balances." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/shift/ShiftService.java", "symbol": "method:close", "note": "The expected balance is calculated only here, after the count was sent." },
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:shift_counts", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:blindShiftCloseNeedsCommentOutsideTolerance", "note": "" }
+      ]
+    },
+    {
+      "id": "anomalies",
+      "title": "Anomalies",
+      "summary": "Rules in the services raise anomalies: large amounts, late or large corrections, cash differences, bank overdraft. The management reviews them and closes each one with a note.",
+      "routes": ["/anomalies", "/dashboard"],
+      "endpoints": ["GET /api/anomalies", "POST /api/anomalies/{id}/decision"],
+      "steps": [
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/anomaly/AnomalyService.java", "symbol": "method:raise", "note": "One entry point for all rules." },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:afterChange", "note": "Overdraft check after every outgoing bank operation." },
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/anomaly/AnomalyController.java", "symbol": "method:decide", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/anomaly/AnomalyService.java", "symbol": "method:decide", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:largeAmountCreatesAnomaly", "note": "" }
+      ]
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard figures",
+      "summary": "Profit, turnover, balances in EUR, money in transit and open anomalies are calculated from operations on every request; nothing is stored twice.",
+      "routes": ["/dashboard", "/accounts"],
+      "endpoints": ["GET /api/dashboard", "GET /api/accounts"],
+      "steps": [
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/report/ReportController.java", "symbol": "method:dashboard", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/report/ReportService.java", "symbol": "method:dashboard", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/account/AccountService.java", "symbol": "method:balance", "note": "A balance is the sum of operations, calculated by the database." },
+        { "layer": "Repository", "file": "main/java/dev/plotnikov/fintrack/operation/OperationRepository.java", "symbol": "file", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/account/AccountService.java", "symbol": "method:list", "note": "" }
+      ]
+    },
+    {
+      "id": "reports",
+      "title": "Monthly report, CSV export and bank import",
+      "summary": "Income and expenses by category and office; export to CSV; import of a bank statement with a dry run and a duplicate check.",
+      "routes": ["/reports"],
+      "endpoints": ["GET /api/reports/monthly", "GET /api/reports/export", "POST /api/import"],
+      "steps": [
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/report/ReportService.java", "symbol": "method:monthly", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/report/CsvService.java", "symbol": "method:export", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/report/CsvService.java", "symbol": "method:importStatement", "note": "A dry run shows what would be booked; a row seen before is skipped." },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:statementImportWithDryRunAndDuplicates", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:monthlyReportAndDashboard", "note": "" }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Roles and security",
+      "summary": "Session login with CSRF protection and a limit on wrong passwords. Roles are checked on the server: an employee sees and uses only the accounts of their own office.",
+      "routes": ["/login", "/dashboard"],
+      "endpoints": ["POST /api/auth/login", "POST /api/auth/logout", "GET /api/auth/me", "GET /api/auth/demo-users"],
+      "steps": [
+        { "layer": "Config", "file": "main/java/dev/plotnikov/fintrack/config/SecurityConfig.java", "symbol": "method:filterChain", "note": "" },
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/config/AuthController.java", "symbol": "method:login", "note": "" },
+        { "layer": "Config", "file": "main/java/dev/plotnikov/fintrack/config/LoginRateLimiter.java", "symbol": "type:LoginRateLimiter", "note": "" },
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/operation/OperationService.java", "symbol": "method:checkAccountAccess", "note": "" },
+        { "layer": "Test", "file": "test/java/dev/plotnikov/fintrack/BusinessRulesTest.java", "symbol": "method:employeeOnlyUsesOwnOfficeAndCannotMakeOwnerOperations", "note": "" }
+      ]
+    },
+    {
+      "id": "audit",
+      "title": "Audit log",
+      "summary": "Every change is written in the same transaction: who, what, when and the details. The “Live activity” panel reads the same table.",
+      "routes": ["/audit"],
+      "endpoints": ["GET /api/audit"],
+      "steps": [
+        { "layer": "Service", "file": "main/java/dev/plotnikov/fintrack/audit/AuditService.java", "symbol": "method:log", "note": "" },
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/audit/AuditController.java", "symbol": "method:list", "note": "" },
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:audit_log", "note": "" }
+      ]
+    },
+    {
+      "id": "database",
+      "title": "Database schema",
+      "summary": "PostgreSQL schema managed by Flyway. Money is NUMERIC, every operation keeps its own exchange rate, constraints protect the data even from a bug in the code.",
+      "routes": ["/accounts"],
+      "endpoints": ["GET /api/categories", "GET /api/offices", "GET /api/rates", "GET /api/people"],
+      "steps": [
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:accounts", "note": "" },
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:exchange_rates", "note": "" },
+        { "layer": "SQL", "file": "main/resources/db/migration/V1__schema.sql", "symbol": "sql:anomalies", "note": "" },
+        { "layer": "Controller", "file": "main/java/dev/plotnikov/fintrack/account/ReferenceController.java", "symbol": "file", "note": "" }
+      ]
+    }
+  ]
+}
